@@ -1,9 +1,20 @@
 const apiBaseUrl = '/api/contatos';
 
+let mensagemTimeoutId = null;
+
 const exibirMensagem = (tipo, mensagem) => {
     const $div = $('#div_mensagens');
+
+    if (mensagemTimeoutId) {
+        clearTimeout(mensagemTimeoutId);
+        mensagemTimeoutId = null;
+    }
+
     if (!mensagem) {
-        $div.hide().removeClass('alert alert-danger alert-success').text('');
+        $div.stop(true, true)
+            .hide()
+            .removeClass('alert alert-danger alert-success')
+            .text('');
         return;
     }
 
@@ -11,10 +22,18 @@ const exibirMensagem = (tipo, mensagem) => {
     const classeTipo = tipo === 'sucesso' ? 'alert-success' : 'alert-danger';
 
     $div
+        .stop(true, true)
         .removeClass('alert-danger alert-success')
         .addClass(classeBase + ' ' + classeTipo)
         .text(mensagem)
-        .show();
+        .fadeIn(200);
+
+    mensagemTimeoutId = setTimeout(() => {
+        $div.fadeOut(300, () => {
+            $div.removeClass('alert alert-danger alert-success').text('');
+        });
+        mensagemTimeoutId = null;
+    }, 2000);
 };
 
 const formatarTelefone = (valor) => {
