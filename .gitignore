@@ -10,7 +10,7 @@ target/
 .classpath
 
 # Log gerado pela aplicação
-exclusoes_log.txt
+contatos_log.txt
 
 # Sistema
 .DS_Store
