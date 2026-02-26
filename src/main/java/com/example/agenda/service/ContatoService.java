@@ -80,14 +80,19 @@ public class ContatoService {
 
     @Transactional(readOnly = true)
     public List<ContatoResponseDTO> listar(String nome, String telefone) {
-        String nomeFiltro = (nome != null && !nome.isBlank()) ? nome : null;
-        String telefoneFiltro = (telefone != null && !telefone.isBlank()) ? telefone : null;
+        String nomeFiltro = (nome != null && !nome.isBlank()) ? nome.trim() : null;
+        String telefoneFiltro = (telefone != null && !telefone.isBlank()) ? telefone.trim() : null;
 
         List<Contato> contatos;
         if (nomeFiltro == null && telefoneFiltro == null) {
             contatos = contatoRepository.findAll();
         } else {
-            contatos = contatoRepository.pesquisar(nomeFiltro, telefoneFiltro);
+            List<Long> ids = contatoRepository.pesquisarIds(nomeFiltro, telefoneFiltro);
+            if (ids.isEmpty()) {
+                contatos = List.of();
+            } else {
+                contatos = contatoRepository.findByIdContatoInWithTelefones(ids);
+            }
         }
 
         return contatos.stream()

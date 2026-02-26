@@ -1,6 +1,21 @@
-/* global $, axios */
-
 const apiBaseUrl = '/api/contatos';
+
+const exibirMensagem = (tipo, mensagem) => {
+    const $div = $('#div_mensagens');
+    if (!mensagem) {
+        $div.hide().removeClass('alert alert-danger alert-success').text('');
+        return;
+    }
+
+    const classeBase = 'alert';
+    const classeTipo = tipo === 'sucesso' ? 'alert-success' : 'alert-danger';
+
+    $div
+        .removeClass('alert-danger alert-success')
+        .addClass(classeBase + ' ' + classeTipo)
+        .text(mensagem)
+        .show();
+};
 
 const formatarTelefone = (valor) => {
     if (!valor) {
@@ -122,9 +137,8 @@ const carregarContatos = (filtros) => {
                 $tbody.append(linha);
             });
         })
-        .catch((error) => {
-            console.error(error);
-            window.alert('Erro ao carregar contatos.');
+        .catch(() => {
+            exibirMensagem('erro', 'Erro ao carregar contatos.');
         });
 };
 
@@ -162,9 +176,8 @@ const carregarContatoParaEdicao = (id) => {
                 );
             }
         })
-        .catch((error) => {
-            console.error(error);
-            window.alert('Erro ao carregar contato para edição.');
+        .catch(() => {
+            exibirMensagem('erro', 'Erro ao carregar contato para edição.');
         });
 };
 
@@ -177,9 +190,8 @@ const excluirContato = (id) => {
         .then(() => {
             carregarContatos();
         })
-        .catch((error) => {
-            console.error(error);
-            window.alert('Erro ao excluir contato.');
+        .catch(() => {
+            exibirMensagem('erro', 'Erro ao excluir contato.');
         });
 };
 
@@ -191,7 +203,7 @@ $(document).ready(() => {
 
         const objeto = montarObjetoContato();
         if (!objeto.nomeContato || objeto.nomeContato.trim().length === 0) {
-            window.alert('Informe o nome do contato.');
+            exibirMensagem('erro', 'Informe o nome do contato.');
             return;
         }
 
@@ -201,20 +213,20 @@ $(document).ready(() => {
                 .then(() => {
                     limparFormulario();
                     carregarContatos();
+                    exibirMensagem('sucesso', 'Contato atualizado com sucesso.');
                 })
-                .catch((error) => {
-                    console.error(error);
-                    window.alert('Erro ao atualizar contato.');
+                .catch(() => {
+                    exibirMensagem('erro', 'Erro ao atualizar contato.');
                 });
         } else {
             axios.post(apiBaseUrl, objeto)
                 .then(() => {
                     limparFormulario();
                     carregarContatos();
+                    exibirMensagem('sucesso', 'Contato salvo com sucesso.');
                 })
-                .catch((error) => {
-                    console.error(error);
-                    window.alert('Erro ao salvar contato.');
+                .catch(() => {
+                    exibirMensagem('erro', 'Erro ao salvar contato.');
                 });
         }
     });

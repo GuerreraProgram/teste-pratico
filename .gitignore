@@ -1,0 +1,17 @@
+# Build (Maven)
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Log gerado pela aplicação
+exclusoes_log.txt
+
+# Sistema
+.DS_Store
+Thumbs.db
