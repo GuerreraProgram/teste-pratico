@@ -2,12 +2,55 @@
 
 const apiBaseUrl = '/api/contatos';
 
+const formatarTelefone = (valor) => {
+    if (!valor) {
+        return '';
+    }
+
+    const digitos = valor.replace(/\D/g, '').substring(0, 11);
+
+    if (digitos.length === 0) {
+        return '';
+    }
+
+    if (digitos.length <= 2) {
+        return '(' + digitos;
+    }
+
+    if (digitos.length <= 7) {
+        return '(' + digitos.substring(0, 2) + ') ' + digitos.substring(2);
+    }
+
+    const ddd = digitos.substring(0, 2);
+    const parte1 = digitos.substring(2, 7);
+    const parte2 = digitos.substring(7);
+
+    return '(' + ddd + ') ' + parte1 + '-' + parte2;
+};
+
+const configurarMascarasTelefone = () => {
+    $(document).off('input', '.input-telefone').on('input', '.input-telefone', (event) => {
+        const $campo = $(event.currentTarget);
+        const valor = $campo.val();
+        const formatado = formatarTelefone(valor);
+        $campo.val(formatado);
+    });
+
+    $('#input_filtro_telefone').off('input').on('input', (event) => {
+        const $campo = $(event.currentTarget);
+        const valor = $campo.val();
+        const formatado = formatarTelefone(valor);
+        $campo.val(formatado);
+    });
+};
+
 const montarObjetoContato = () => {
     const telefones = [];
     $('.input-telefone').each((index, element) => {
         const valor = $(element).val();
         if (valor && valor.trim().length > 0) {
-            telefones.push(valor.trim());
+            const somenteDigitos = valor.replace(/\D/g, '');
+            telefones.push(somenteDigitos);
         }
     });
 
@@ -63,7 +106,7 @@ const carregarContatos = (filtros) => {
 
             dados.forEach((contato) => {
                 const telefonesStr = (contato.telefones || [])
-                    .map((t) => t.numeroTelefone)
+                    .map((t) => formatarTelefone(t.numeroTelefone))
                     .join(', ');
 
                 const linha = '' +
@@ -101,7 +144,7 @@ const carregarContatoParaEdicao = (id) => {
                     const html = '' +
                         '<div class="row mb-2 div-telefone-linha">' +
                         '<div class="col-md-4">' +
-                        '<input type="text" class="form-control input-telefone" value="' + t.numeroTelefone + '">' +
+                        '<input type="text" class="form-control input-telefone" value="' + formatarTelefone(t.numeroTelefone) + '">' +
                         '</div>' +
                         '<div class="col-md-2">' +
                         '<button type="button" class="btn btn-danger btn-telefone-remove">Remover</button>' +
@@ -187,7 +230,8 @@ $(document).ready(() => {
     $('#btn_pesquisar').off('click').on('click', () => {
         const nome = $('#input_filtro_nome').val();
         const telefone = $('#input_filtro_telefone').val();
-        carregarContatos({ nome: nome, telefone: telefone });
+        const telefoneSomenteDigitos = telefone ? telefone.replace(/\D/g, '') : null;
+        carregarContatos({ nome: nome, telefone: telefoneSomenteDigitos });
     });
 
     $('#btn_listar_todos').off('click').on('click', () => {
@@ -210,5 +254,7 @@ $(document).ready(() => {
         const id = $(event.currentTarget).data('id');
         excluirContato(id);
     });
+
+    configurarMascarasTelefone();
 });
 
