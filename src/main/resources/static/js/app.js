@@ -208,6 +208,7 @@ const excluirContato = (id) => {
     axios.delete(apiBaseUrl + '/' + id)
         .then(() => {
             carregarContatos();
+            exibirMensagem('sucesso', 'Contato excluído com sucesso.');
         })
         .catch(() => {
             exibirMensagem('erro', 'Erro ao excluir contato.');

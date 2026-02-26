@@ -51,6 +51,7 @@ public class ContatoService {
         contato.setTelefones(telefones);
 
         Contato salvo = contatoRepository.save(contato);
+        registrarEmArquivo("adicionado", salvo.getNomeContato());
         return mapToResponse(salvo);
     }
 
@@ -75,6 +76,7 @@ public class ContatoService {
         }
 
         Contato salvo = contatoRepository.save(contato);
+        registrarEmArquivo("editado", salvo.getNomeContato());
         return mapToResponse(salvo);
     }
 
@@ -116,7 +118,7 @@ public class ContatoService {
 
         contatoRepository.delete(contato);
 
-        registrarExclusaoEmArquivo(nomeContato);
+        registrarEmArquivo("excluído", nomeContato);
     }
 
     private ContatoResponseDTO mapToResponse(Contato contato) {
@@ -139,17 +141,16 @@ public class ContatoService {
         return dto;
     }
 
-    private void registrarExclusaoEmArquivo(String nomeContato) {
+    private void registrarEmArquivo(String acao, String nomeContato) {
         String timestamp = LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        String linha = timestamp + " - Contato excluído: " + nomeContato + System.lineSeparator();
+        String linha = timestamp + " - Contato " + acao + ": " + nomeContato + System.lineSeparator();
 
-        Path path = Path.of("exclusoes_log.txt");
+        Path path = Path.of("contatos_log.txt");
         try {
             Files.write(path, linha.getBytes(StandardCharsets.UTF_8),
                     StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
-            // não lança para não quebrar a transação de negócio
             e.printStackTrace();
         }
     }
