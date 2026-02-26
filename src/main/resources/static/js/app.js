@@ -1,0 +1,214 @@
+/* global $, axios */
+
+const apiBaseUrl = '/api/contatos';
+
+const montarObjetoContato = () => {
+    const telefones = [];
+    $('.input-telefone').each((index, element) => {
+        const valor = $(element).val();
+        if (valor && valor.trim().length > 0) {
+            telefones.push(valor.trim());
+        }
+    });
+
+    return {
+        nomeContato: $('#input_nome_contato').val(),
+        idadeContato: $('#input_idade_contato').val() ? parseInt($('#input_idade_contato').val(), 10) : null,
+        telefones: telefones
+    };
+};
+
+const limparFormulario = () => {
+    $('#input_id_contato').val('');
+    $('#input_nome_contato').val('');
+    $('#input_idade_contato').val('');
+    $('#div_telefones').empty();
+    $('#div_telefones').append(
+        '<label class="form-label">Telefones</label>' +
+        '<div class="row mb-2 div-telefone-linha">' +
+        '<div class="col-md-4">' +
+        '<input type="text" class="form-control input-telefone" placeholder="(99) 99999-9999">' +
+        '</div>' +
+        '</div>'
+    );
+};
+
+const adicionarLinhaTelefone = () => {
+    const html = '' +
+        '<div class="row mb-2 div-telefone-linha">' +
+        '<div class="col-md-4">' +
+        '<input type="text" class="form-control input-telefone" placeholder="(99) 99999-9999">' +
+        '</div>' +
+        '<div class="col-md-2">' +
+        '<button type="button" class="btn btn-danger btn-telefone-remove">Remover</button>' +
+        '</div>' +
+        '</div>';
+    $('#div_telefones').append(html);
+};
+
+const carregarContatos = (filtros) => {
+    const params = {};
+    if (filtros && filtros.nome) {
+        params.nome = filtros.nome;
+    }
+    if (filtros && filtros.telefone) {
+        params.telefone = filtros.telefone;
+    }
+
+    axios.get(apiBaseUrl, { params: params })
+        .then((response) => {
+            const dados = response.data || [];
+            const $tbody = $('#tbody_contatos');
+            $tbody.empty();
+
+            dados.forEach((contato) => {
+                const telefonesStr = (contato.telefones || [])
+                    .map((t) => t.numeroTelefone)
+                    .join(', ');
+
+                const linha = '' +
+                    '<tr>' +
+                    '<td>' + contato.nomeContato + '</td>' +
+                    '<td>' + (contato.idadeContato != null ? contato.idadeContato : '') + '</td>' +
+                    '<td>' + telefonesStr + '</td>' +
+                    '<td>' +
+                    '<button type="button" class="btn btn-sm btn-primary btn-editar" data-id="' + contato.idContato + '">Editar</button> ' +
+                    '<button type="button" class="btn btn-sm btn-danger btn-excluir" data-id="' + contato.idContato + '">Excluir</button>' +
+                    '</td>' +
+                    '</tr>';
+                $tbody.append(linha);
+            });
+        })
+        .catch((error) => {
+            console.error(error);
+            window.alert('Erro ao carregar contatos.');
+        });
+};
+
+const carregarContatoParaEdicao = (id) => {
+    axios.get(apiBaseUrl + '/' + id)
+        .then((response) => {
+            const contato = response.data;
+            $('#input_id_contato').val(contato.idContato);
+            $('#input_nome_contato').val(contato.nomeContato);
+            $('#input_idade_contato').val(contato.idadeContato);
+
+            $('#div_telefones').empty();
+            $('#div_telefones').append('<label class="form-label">Telefones</label>');
+
+            if (contato.telefones && contato.telefones.length > 0) {
+                contato.telefones.forEach((t) => {
+                    const html = '' +
+                        '<div class="row mb-2 div-telefone-linha">' +
+                        '<div class="col-md-4">' +
+                        '<input type="text" class="form-control input-telefone" value="' + t.numeroTelefone + '">' +
+                        '</div>' +
+                        '<div class="col-md-2">' +
+                        '<button type="button" class="btn btn-danger btn-telefone-remove">Remover</button>' +
+                        '</div>' +
+                        '</div>';
+                    $('#div_telefones').append(html);
+                });
+            } else {
+                $('#div_telefones').append(
+                    '<div class="row mb-2 div-telefone-linha">' +
+                    '<div class="col-md-4">' +
+                    '<input type="text" class="form-control input-telefone" placeholder="(99) 99999-9999">' +
+                    '</div>' +
+                    '</div>'
+                );
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+            window.alert('Erro ao carregar contato para edição.');
+        });
+};
+
+const excluirContato = (id) => {
+    if (!window.confirm('Confirma a exclusão deste contato?')) {
+        return;
+    }
+
+    axios.delete(apiBaseUrl + '/' + id)
+        .then(() => {
+            carregarContatos();
+        })
+        .catch((error) => {
+            console.error(error);
+            window.alert('Erro ao excluir contato.');
+        });
+};
+
+$(document).ready(() => {
+    carregarContatos();
+
+    $('#form_contato').off('submit').on('submit', (event) => {
+        event.preventDefault();
+
+        const objeto = montarObjetoContato();
+        if (!objeto.nomeContato || objeto.nomeContato.trim().length === 0) {
+            window.alert('Informe o nome do contato.');
+            return;
+        }
+
+        const id = $('#input_id_contato').val();
+        if (id) {
+            axios.put(apiBaseUrl + '/' + id, objeto)
+                .then(() => {
+                    limparFormulario();
+                    carregarContatos();
+                })
+                .catch((error) => {
+                    console.error(error);
+                    window.alert('Erro ao atualizar contato.');
+                });
+        } else {
+            axios.post(apiBaseUrl, objeto)
+                .then(() => {
+                    limparFormulario();
+                    carregarContatos();
+                })
+                .catch((error) => {
+                    console.error(error);
+                    window.alert('Erro ao salvar contato.');
+                });
+        }
+    });
+
+    $('#btn_adicionar_telefone').off('click').on('click', () => {
+        adicionarLinhaTelefone();
+    });
+
+    $('#btn_limpar').off('click').on('click', () => {
+        limparFormulario();
+    });
+
+    $('#btn_pesquisar').off('click').on('click', () => {
+        const nome = $('#input_filtro_nome').val();
+        const telefone = $('#input_filtro_telefone').val();
+        carregarContatos({ nome: nome, telefone: telefone });
+    });
+
+    $('#btn_listar_todos').off('click').on('click', () => {
+        $('#input_filtro_nome').val('');
+        $('#input_filtro_telefone').val('');
+        carregarContatos();
+    });
+
+    $(document).off('click', '.btn-telefone-remove').on('click', '.btn-telefone-remove', (event) => {
+        const $linha = $(event.currentTarget).closest('.div-telefone-linha');
+        $linha.remove();
+    });
+
+    $(document).off('click', '.btn-editar').on('click', '.btn-editar', (event) => {
+        const id = $(event.currentTarget).data('id');
+        carregarContatoParaEdicao(id);
+    });
+
+    $(document).off('click', '.btn-excluir').on('click', '.btn-excluir', (event) => {
+        const id = $(event.currentTarget).data('id');
+        excluirContato(id);
+    });
+});
+
